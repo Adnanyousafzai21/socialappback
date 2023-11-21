@@ -6,26 +6,66 @@ const cors = require("cors")
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.get("/", (req, res)=>{
+app.get("/", (req, res) => {
 
-  res.send({message:"hello succesfully don"})
+  res.send({ message: "hello succesfully don" })
 })
 app.post("/register", async (req, res) => {
   try {
-    const regest = new registration(req.body)
-    const regester = await regest.save()
-    res.send(regester)
+    const { email, firstname, lastname, password } = req.body;
+    const emailUnique = await registration.findOne({ email: email });
+
+    if (emailUnique) {
+      res.status(400).json({ status: "failed", message: "Email already in use" });
+    } else {
+      if (email && firstname && lastname && password) {
+        const doc = new registration({
+          firstname, lastname, email, password
+        });
+        const registeredUser = await doc.save();
+        // res.status(201).json(registeredUser);
+        res.send({"status":"Success", "massage":"registered successfully "})
+      } else {
+        res.status(400).json({ status: "failed", message: "All fields are required" });
+      }
+    }
 
   } catch (error) {
     if (error.code === 11000 && error.keyPattern.email) {
-      res.status(400).send("email is already in use")
+      res.status(400).json({ status: "failed", message: "Email is already in use" });
     } else {
-
-      res.status(500).send("An error occurred while saving the product.");
+      console.error("Registration error:", error);
+      res.status(500).json({ status: "failed", message: "An error occurred while saving the product." });
     }
-
   }
-})
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+  if(email && password){
+    const user = await registration.find({ email, password });
+
+    if (user) {
+      res.semd({ message: 'Login successful' });
+    } else {
+      res.status(401).send({ message: 'user not exist' });
+    }
+  }
+  else{
+    res.status(500).json({ status: "failed", message: "all field are required!" });
+   
+  }
+   
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
+
 app.post("/allblogs", async (req, res) => {
   try {
     const newblog = new allblogs(req.body);
@@ -70,18 +110,18 @@ app.delete("/blogs/:id", async (req, res) => {
   }
 })
 
-app.get("/getupdateblog/:id", async(req, res)=>{
- try{
-  const { id } = req.params;
-  const getdata = await allblogs.findOne({ _id: id });
-  if (getdata) {
-    res.send(getdata);
-  } else {
-    res.status(404).send("Data not found");
+app.get("/getupdateblog/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const getdata = await allblogs.findOne({ _id: id });
+    if (getdata) {
+      res.send(getdata);
+    } else {
+      res.status(404).send("Data not found");
+    }
+  } catch (error) {
+    res.status(500).send("an error while getting data".error)
   }
- }catch(error){
-  res.status(500).send("an error while getting data". error)
- }
 
 })
 
@@ -93,7 +133,7 @@ app.put("/updateblog/:id", async (req, res) => {
     const updatedBlog = await allblogs.findByIdAndUpdate(
       id,
       { title, discription },
-      { new: true } 
+      { new: true }
     );
 
     if (!updatedBlog) {

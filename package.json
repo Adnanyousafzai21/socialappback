@@ -10,13 +10,11 @@
     "start": "node index",
     "build": "npm i"
   },
-    "name": "baceend",
+  "name": "baceend",
   "version": "1.0.0",
   "main": "index.js",
-  "devDependencies": {},
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": ""
-
 }
